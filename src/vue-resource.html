@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+</head>
+<body>
+    <div id="app" class="container">
+        <h1>vue-resource插件讲解</h1>
+        <a href="javascript:;" class="btn btn-primary" @click="get">get请求</a>
+		<a href="javascript:;" class="btn btn-primary" @click="post">post请求</a>
+        <a href="javascript:;" class="btn btn-primary" @click="jsonp">jsonp请求</a>
+        <a href="javascript:;" class="btn btn-primary" @click="http">http请求</a>
+		<div>
+			<span>{{msg}}</span>
+		</div>
+    </div>
+
+    <script src="../node_modules/vue/dist/vue.js"></script>
+    <script src="../node_modules/vue-resource/dist/vue-resource.js"></script>
+	<!--创建实例-->
+	<script>
+		new Vue({
+			el:"#app",
+			data:{
+				msg:""
+			},
+			//全局拦截器
+			mounted:function () {
+				Vue.http.interceptors.push(function (request,next) {
+					//没有发送请求之前打个点
+					console.log("request init.")
+					//跟踪.请求后做一个扭转
+					next(function (response) {
+						//响应了,打个点
+						console.log("response init.")
+						return response;
+					});
+				});
+			},
+			// http地址全局设置
+			http:{
+				root:'http://localhost:63342/vueResource/'
+			},
+			methods:{
+				get:function(){
+					//"package.json"为请求的文件名
+					this.$http.get("package.json",{
+						//传递参数
+						params:{
+							userId:'101'
+						},
+						headers:{
+							token:"abcd"
+						}
+					})
+					.then(
+						res=> {
+							this.msg = res.data;//res.data 在vue里面才是我们需要的最终结果
+						},
+						error=>{
+							this.msg = error;
+						}
+					);
+				},
+				post:function(){
+					this.$http.post("package.json",{
+							userId:'102'
+						},
+						{
+							headers:{
+								access_token:'abc'
+							}
+						}
+					)
+					.then(function (res) {
+						this.msg = res.data;
+					});
+				},
+				//jsonp请求实际上是一种跨域的请求
+				jsonp:function(){
+					this.$http.jsonp("https://www.imooc.com/static/moco/v1.0/dist/css/moco.min.css").then(function (res) {
+						this.msg =res.data;
+					});
+				},
+				//全局的方式做一个配置
+				http:function () {
+					this.$http({
+						url:'package.json',
+						params:{
+							userId:"103"
+						},
+						headers:{
+							token:'123'
+						},
+						timeout:5,
+						//请求之前会执行的函数
+						before:function () {
+							console.log('before init');
+						}
+					}).then(function (res) { this.msg = res.data });
+				}
+			}
+		});
+	</script>
+
+
+</body>
+</html>
